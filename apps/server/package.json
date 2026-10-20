@@ -1,0 +1,16 @@
+{
+  "name": "@party/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --target=bun --outdir dist --minify-syntax --sourcemap=linked",
+    "start": "NODE_ENV=production bun dist/index.js"
+  },
+  "dependencies": {
+    "@party/game-sdk": "workspace:*",
+    "@party/shared": "workspace:*",
+    "zod": "^4.1.0"
+  }
+}

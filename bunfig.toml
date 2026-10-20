@@ -1,0 +1,6 @@
+[install]
+exact = false
+
+[test]
+root = "."
+# Tests live beside code (*.test.ts) and in /tests for integration.

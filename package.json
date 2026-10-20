@@ -1,0 +1,19 @@
+{
+  "name": "party-platform",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*", "tests"],
+  "scripts": {
+    "dev": "bun scripts/dev.ts",
+    "dev:server": "bun --cwd apps/server run dev",
+    "dev:web": "bun --cwd apps/web run dev",
+    "test": "bun test",
+    "typecheck": "bun scripts/typecheck.ts",
+    "build": "bun --cwd apps/web run build && bun --cwd apps/server run build",
+    "start": "bun --cwd apps/server run start"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.0"
+  }
+}

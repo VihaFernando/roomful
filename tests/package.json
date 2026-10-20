@@ -1,0 +1,11 @@
+{
+  "name": "@party/tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@party/game-sdk": "workspace:*",
+    "@party/server": "workspace:*",
+    "@party/shared": "workspace:*"
+  }
+}
