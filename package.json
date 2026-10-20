@@ -5,12 +5,12 @@
   "workspaces": ["apps/*", "packages/*", "tests"],
   "scripts": {
     "dev": "bun scripts/dev.ts",
-    "dev:server": "bun --cwd apps/server run dev",
-    "dev:web": "bun --cwd apps/web run dev",
+    "dev:server": "bun run --filter @party/server dev",
+    "dev:web": "bun run --filter @party/web dev",
     "test": "bun test",
     "typecheck": "bun scripts/typecheck.ts",
-    "build": "bun --cwd apps/web run build && bun --cwd apps/server run build",
-    "start": "bun --cwd apps/server run start"
+    "build": "bun run --filter @party/web build && bun run --filter @party/server build",
+    "start": "bun run --filter @party/server start"
   },
   "devDependencies": {
     "@types/bun": "latest",

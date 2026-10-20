@@ -41,14 +41,7 @@ export function publicView(s: ImposterState): ImposterPublicView {
       : null,
     voteHistory: s.voteHistory.map((v) => ({ ...v, tallies: v.tallies.map((t) => ({ ...t })) })),
     lastElimination: s.lastElimination ? { ...s.lastElimination } : null,
-    guess: s.guess
-      ? {
-          guesserIds: [...s.guess.guesserIds],
-          submittedIds: Object.keys(s.guess.submissions),
-          // closeGuess appends one result per guesser, so this round's are the last N.
-          results: s.guess.closed ? s.guessResults.slice(-s.guess.guesserIds.length).map((r) => ({ ...r })) : [],
-        }
-      : null,
+    guess: s.guess ? guessView(s, s.guess) : null,
     results:
       s.phase === "results" && s.result
         ? {
@@ -58,8 +51,23 @@ export function publicView(s: ImposterState): ImposterPublicView {
             reason: s.result.reason,
             roles: s.seats.map((id) => ({ playerId: id, role: s.roles[id]! })),
             ballots: s.ballotLog.map((b) => ({ ...b })),
+            guesses: s.guessResults.map((g) => ({ ...g })),
           }
         : null,
+  };
+}
+
+function guessView(s: ImposterState, g: NonNullable<ImposterState["guess"]>): NonNullable<ImposterPublicView["guess"]> {
+  // closeGuess appends one result per guesser, so this round's are the last N.
+  const results = g.closed ? s.guessResults.slice(-g.guesserIds.length) : [];
+  const anyCorrect = g.closed ? results.some((r) => r.correct) : null;
+  const canReveal = s.settings.victoryMode === "oneVote" || anyCorrect === true;
+  return {
+    guesserCount: g.guesserIds.length,
+    submittedCount: Object.keys(g.submissions).length,
+    closed: g.closed,
+    anyCorrect,
+    reveals: canReveal ? results.map((r) => ({ ...r })) : [],
   };
 }
 

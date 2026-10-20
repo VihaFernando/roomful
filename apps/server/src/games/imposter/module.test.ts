@@ -409,7 +409,7 @@ describe("victory and the Imposter's guess", () => {
     expect(M.getAvailableActions(g.s, imp)).toEqual(["guess.submit"]);
     expect(M.getAvailableActions(g.s, g.crew()[1]!)).toEqual([]);
     g.mustAct(imp, { type: "guess.submit", text: ` ${g.s.word.toUpperCase()} ` });
-    expect(g.view("x").pub.guess?.results).toEqual([{ playerId: imp, text: g.s.word.toUpperCase(), correct: true }]);
+    expect(g.view("x").pub.guess?.reveals).toEqual([{ playerId: imp, text: g.s.word.toUpperCase(), correct: true }]);
     g.fire();
     expect(g.s.result).toEqual({ winner: "imposters", reason: "crew_voted_wrong" });
     const outcome = M.calculateResults(g.s);
@@ -478,6 +478,31 @@ describe("victory and the Imposter's guess", () => {
     g.voteAll((v) => (v === victim ? g.crew()[1]! : victim));
     g.fire();
     expect(g.s.result).toEqual({ winner: "imposters", reason: "imposters_parity" });
+  });
+
+  test("elimination mode: the guess phase never exposes who the surviving Imposters are", () => {
+    const g = sim(7, { imposterCount: 2, victoryMode: "elimination" }, 13);
+    g.toVoting();
+    const victim = g.crew()[0]!;
+    g.voteAll((v) => (v === victim ? g.crew()[1]! : victim));
+    g.fire();
+    const [i1, i2] = g.imposters();
+    const crewViewer = g.crew()[1]!;
+    const check = () => {
+      const pub = JSON.stringify(g.view(crewViewer).pub);
+      for (const id of [i1!, i2!]) {
+        // Imposter ids may appear only in seats/turn order/clues, never tied to guessing.
+        expect(g.view(crewViewer).pub.guess).not.toHaveProperty("guesserIds");
+        expect(JSON.stringify(g.view(crewViewer).pub.guess)).not.toContain(id);
+      }
+      return pub;
+    };
+    check();
+    g.mustAct(i1!, { type: "guess.submit", text: "wrong one" });
+    check();
+    g.mustAct(i2!, { type: "guess.submit", text: "also wrong" });
+    check();
+    expect(g.view(crewViewer).pub.guess).toMatchObject({ closed: true, anyCorrect: false, reveals: [] });
   });
 
   test("elimination mode: a correct guess wins immediately", () => {

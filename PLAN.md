@@ -45,6 +45,10 @@ plugin marketplace / dynamic code loading.
 | D12 | In production the server can also serve `apps/web/dist` statically (single-origin deploy), but both apps remain independently runnable. | Simplest deploy; no CORS in prod. |
 | D13 | Per-recipient state filtering happens **on the server** via `getPublicView` / `getPrivateView`. The client never receives data it shouldn't see. | Security requirement. |
 | D14 | Score ledger is a platform service (`ScoreService`) per room. Games return `ScoreAward[]` in their results; the platform applies them. | No game-specific fields on the player model. |
+| D15 | *(changed during build)* Room-level events are a single `room.snapshot` (only sent when its JSON changed) instead of granular playerJoined/settingsUpdated events. Game views stay per-recipient and diffed. | Room state is tiny and public; one event type removes a class of client sync bugs. See docs/PROTOCOL.md. |
+| D16 | *(added)* Product name **Roomful**. Fonts: Bricolage Grotesque (display), Geist (body), Geist Mono (codes). | Distinct identity. |
+| D17 | *(added)* Imposter public guess view shows counts only; shared-screen UI (reveal card, secret peek, clue prompts) is identical for every role. | Avoid revealing surviving Imposters, in protocol and by glance across a room. |
+| D18 | *(added)* `tests/` is a Bun workspace (`@party/tests`); root scripts use `bun run --filter`. | Workspace resolution for integration tests; Bun `--cwd` form is not valid for `run`. |
 
 ---
 
@@ -528,108 +532,55 @@ Each phase ends with: tests green, typecheck green, progress tracker updated.
 
 ## 14. Progress tracker
 
+Status 2026-10-20: **v1 feature-complete.** All phases P1–P11 done except the items marked ☐ below.
+
 ### P1 Foundation
-- [ ] Root `package.json` with workspaces + scripts
-- [ ] `tsconfig.base.json` + per-package tsconfigs (project references)
-- [ ] `bunfig.toml`
-- [ ] `.env.example`, `.gitignore`
-- [ ] `scripts/dev.ts` (runs server + web together)
-- [ ] `git init` + first commit
+- [x] Root `package.json` (workspaces incl. `tests`), scripts via `bun run --filter`
+- [x] `tsconfig.base.json` + per-package tsconfigs (`bun run typecheck` checks each)
+- [x] `bunfig.toml`, `.env.example`, `.gitignore`, `.gitattributes`
+- [x] `scripts/dev.ts` (server + web together), `scripts/typecheck.ts`
+- [x] git init + commits
 
 ### P2 Shared + SDK
-- [ ] constants (protocol version, limits, alphabet, error codes)
-- [ ] identity / room schemas
-- [ ] event envelopes + all payload schemas
-- [ ] HTTP contracts
-- [ ] Imposter contracts (settings, actions, views)
-- [ ] GameModule / GameContext / effects / results types
-- [ ] SDK utilities + contract test harness
+- [x] constants, identity/room-code schemas, event envelopes, HTTP + room contracts
+- [x] Imposter contracts (settings, actions, views)
+- [x] GameModule / GameContext / effects / results, utilities, contract test suite (`@party/game-sdk/testing`)
 
 ### P3 Server infrastructure
-- [ ] config (zod env)
-- [ ] clock / random / scheduler (real + fake)
-- [ ] redacting logger
-- [ ] room code + token + sanitize utils (+ tests)
-- [ ] rate limiter (+ tests)
-- [ ] in-memory stores
-- [ ] RoomService (+ tests)
-- [ ] SessionService (+ tests)
-- [ ] ScoreService (+ tests)
-- [ ] HTTP router + handlers
-- [ ] WS gateway, dispatch, heartbeat, duplicate connections
-- [ ] expiry sweeper (+ tests)
+- [x] config, clock/scheduler (real + fake), crypto random, redacting logger, errors
+- [x] ids/tokens/room codes, rate limiter, in-memory stores
+- [x] RoomService, SessionService, ScoreLedger, HTTP handler (+ static serving), WS gateway, sweeper
 
 ### P4 Engine + registry
-- [ ] GameRegistry (+ tests)
-- [ ] GameRunner lifecycle
-- [ ] per-viewer view fan-out + diffing
-- [ ] idempotent requestIds
-- [ ] dummy module + engine tests
+- [x] GameRegistry, MatchRunner (timers, view diffing, error isolation), idempotent requestIds
+- [x] test-only Coin game proving the engine is game-agnostic
 
 ### P5 Imposter server
-- [ ] word lists (6 categories) + validation test
-- [ ] settings validation by player count
-- [ ] reveal phase
-- [ ] clue phase
-- [ ] discussion phase
-- [ ] voting + revote + inconclusive
-- [ ] imposter guess
-- [ ] victory (oneVote + elimination)
-- [ ] scoring
-- [ ] secret-isolation tests
-- [ ] full-match integration test (4 WS clients)
-- [ ] two-room isolation integration test
+- [x] word lists (6 × 60), settings validation, all phases, revote/inconclusive, guess, both victory modes, scoring
+- [x] secret-isolation tests, full-match + two-room WS integration tests
 
-### P6 Web foundation
-- [ ] Vite + React + Tailwind v4 + fonts
-- [ ] design tokens + UI kit
-- [ ] app shell, router, error boundary
-- [ ] api / socket / session services
-- [ ] room store + hooks
-- [ ] connection banner
-- [ ] `/dev/ui` gallery
-
-### P7 Platform screens
-- [ ] Home
-- [ ] Create flow
-- [ ] Join + code input + deep link
-- [ ] Identity + avatar picker
-- [ ] Lobby (code card, share, players, ready, host tools)
-- [ ] Game picker + settings sheets (registry driven)
-- [ ] Scoreboard
-- [ ] Empty / loading / error / invalid-room states
-
-### P8 Imposter screens
-- [ ] Rules sheet
-- [ ] Role reveal
-- [ ] Clue round
-- [ ] Discussion
-- [ ] Voting (+ revote)
-- [ ] Vote result + imposter guess
-- [ ] Results
-- [ ] Spectator (eliminated) state
-
-### P9 Resilience
-- [ ] reconnect/backoff/visibility
-- [ ] kicked / expired / replaced UX
-- [ ] server clock offset for countdowns
+### P6–P9 Web
+- [x] design tokens, UI kit, avatars, app shell, router, error boundary
+- [x] api / RoomConnection (reconnect, ping, clock offset, request correlation) / storage
+- [x] Home, Create, Join (code input), Identity, Lobby (code/share, players, host tools, game picker, settings, start bar), Scoreboard
+- [x] Imposter: rules, reveal, clues, discussion, voting/revote, vote result, guess, results, spectator/eliminated states
+- [x] connection banner, kicked / closed / replaced / invalid-room / not-found / loading states
+- [ ] `/dev/ui` component gallery — dropped (browser QA script covers visual checks)
 
 ### P10 Hardening
-- [ ] all tests green
-- [ ] typecheck green
-- [ ] production build + start verified
-- [ ] multi-browser manual playtest
-- [ ] mobile QA (iOS Safari, Android Chrome)
-- [ ] a11y + reduced motion pass
+- [x] 118 tests green, typecheck green, production build + start verified (SPA fallback, traversal blocked)
+- [x] Automated multi-browser playthrough (4 isolated Chrome contexts, phone viewport) incl. reload mid-game, replay, kick, guess path
+- [ ] Manual QA on real iOS Safari + Android Chrome devices (keyboard behaviour, background/foreground)
+- [ ] Accessibility audit with a screen reader
 
 ### P11 Docs
-- [ ] README
-- [ ] ARCHITECTURE.md
-- [ ] PROTOCOL.md
-- [ ] ADDING_A_GAME.md
-- [ ] IMPOSTER_RULES.md
-- [ ] DEPLOYMENT.md
-- [ ] final implementation summary
+- [x] README, ARCHITECTURE, PROTOCOL, ADDING_A_GAME, IMPOSTER_RULES, DEPLOYMENT
+
+### Ideas / next
+- Second game (follow docs/ADDING_A_GAME.md) to validate the SDK for real
+- Reduce web bundle (~150 KB gz; zod → `zod/mini` on the client)
+- "Not connected yet" vs "Reconnecting" label for players who joined but never opened a socket
+- Optional host "lock room" toggle
 
 ---
 
@@ -638,10 +589,11 @@ Each phase ends with: tests green, typecheck green, progress tracker updated.
 | date | what happened | next step |
 |---|---|---|
 | 2026-10-20 | Repo empty; Bun 1.4.2 available. Wrote PLAN.md and docs/BRIEF.md. | Start P1 Foundation. |
+| 2026-10-20 | Built everything P1–P11: shared/sdk, server, Imposter, web UI, tests (118), docs. Browser QA with puppeteer-core (scratchpad, not in repo) found & fixed: role-revealing colours on shared screens, guess phase exposing Imposter ids, desktop lobby width. | Real-device mobile QA; then a second game. |
 
 ---
 
-## 16. How a second game will be added (target workflow — verify in P11)
+## 16. How a second game will be added (verified — see docs/ADDING_A_GAME.md)
 
 1. `packages/shared/src/games/<id>/` — settings schema, action schema, public/private view types; export from index.
 2. `apps/server/src/games/<id>/` — implement `GameModule`; keep data files beside it.

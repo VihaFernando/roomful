@@ -124,6 +124,7 @@ export interface ImposterResultsReveal {
   roles: EliminationReveal[];
   /** voterId → targetId for every vote, revealed at the end. */
   ballots: { cycle: number; isRevote: boolean; voterId: string; targetId: string }[];
+  guesses: GuessReveal[];
 }
 
 /** What every participant and spectator may see. */
@@ -147,7 +148,12 @@ export interface ImposterPublicView {
   voting: { isRevote: boolean; candidates: string[]; votedIds: string[] } | null;
   voteHistory: VoteRecord[];
   lastElimination: EliminationReveal | null;
-  guess: { guesserIds: string[]; submittedIds: string[]; results: GuessReveal[] } | null;
+  /**
+   * Counts only: who is guessing would expose surviving Imposters in elimination mode.
+   * `reveals` is filled once guessing closes and only when it can't leak identities
+   * (oneVote mode, or a correct guess that ends the match).
+   */
+  guess: { guesserCount: number; submittedCount: number; closed: boolean; anyCorrect: boolean | null; reveals: GuessReveal[] } | null;
   results: ImposterResultsReveal | null;
 }
 

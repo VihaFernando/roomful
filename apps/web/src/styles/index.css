@@ -1,0 +1,128 @@
+@import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/*
+ * Roomful design tokens. Warm paper, ink text, one orange accent used sparingly.
+ * Team colors (crew/imposter) appear only where roles are revealed.
+ */
+@theme {
+  --color-paper: #f5f1e8;
+  --color-card: #fffdf7;
+  --color-sunk: #ede7da;
+  --color-line: #e2dacb;
+  --color-line-strong: #cbc0ac;
+  --color-ink: #1c1a17;
+  --color-ink-2: #48433b;
+  --color-muted: #77705f;
+  --color-accent: #ff5a1f;
+  --color-accent-press: #e0480f;
+  --color-accent-soft: #ffe7dc;
+  --color-accent-ink: #9a2d05;
+  --color-crew: #2e6b5a;
+  --color-crew-soft: #dcece5;
+  --color-imposter: #b42318;
+  --color-imposter-soft: #f8e0dc;
+  --color-warn: #a86a10;
+  --color-warn-soft: #f7ead2;
+
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  --shadow-card: 0 1px 0 rgb(28 26 23 / 0.04), 0 1px 3px rgb(28 26 23 / 0.06);
+  --shadow-lift: 0 1px 0 rgb(28 26 23 / 0.05), 0 6px 18px -8px rgb(28 26 23 / 0.18);
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --animate-enter: enter 160ms var(--ease-out) both;
+  --animate-flip: flip 220ms var(--ease-out) both;
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+  @keyframes flip {
+    from {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-accent-soft);
+  }
+  input,
+  textarea {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 12px);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility px-safe {
+  padding-left: max(env(safe-area-inset-left), 16px);
+  padding-right: max(env(safe-area-inset-right), 16px);
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
