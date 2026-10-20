@@ -1,8 +1,24 @@
+# dependencies & builds
 node_modules/
 dist/
+coverage/
+*.tsbuildinfo
+
+# environment & secrets (only the template is committed)
 .env
-.env.local
+.env.*
+!.env.example
+*.pem
+*.key
+
+# logs & OS/editor noise
 *.log
 .DS_Store
-coverage/
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# local tool output
 graphify-out/
+.claude/settings.local.json
