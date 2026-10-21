@@ -1,8 +1,9 @@
 # Roomful: party games for your people
 
 Private, real-time party games played from everyone's phone. Make a room, share the six-character code, play.
-The first game is **Imposter**. The platform is game-agnostic, so new games plug in without touching rooms,
-sessions or the protocol.
+Two games so far: **Imposter** (find the one who doesn't know the word) and **Mafia** (night kills, a Doctor, an
+Investigator, day votes). The platform is game-agnostic, so new games plug in without touching rooms, sessions or
+the protocol.
 
 - **Runtime:** Bun everywhere (install, dev, test, build, production)
 - **Server:** `Bun.serve` HTTP and native WebSockets, server-authoritative, Zod-validated
@@ -46,14 +47,14 @@ apps/
     modules/scoring      ScoreLedger (party scoreboard shared by all games)
     modules/games        GameRegistry
     game-engine/         MatchRunner: runs a GameModule, timers, per-viewer view diffing
-    games/               ← game modules (imposter/) and the registry list (index.ts)
+    games/               ← game modules (imposter/, mafia/) and the registry list (index.ts)
   web/src/
     routes/              Home, Create, Join, Room (/r/:code), NotFound
     features/rooms       connection context + room shell (header, sheets, banners)
     features/lobby       code card, players, game picker, settings, start bar
     features/players     identity form + avatar set
     features/scoreboard  party scoreboard
-    features/games/      ← game UIs (imposter/) and the web registry (registry.ts)
+    features/games/      ← game UIs (imposter/, mafia/), shared game parts (shared/), web registry (registry.ts)
     services/            HTTP api, RoomConnection (WebSocket + reconnect), storage
     components/          design-system primitives and layout
 packages/
@@ -61,6 +62,8 @@ packages/
   game-sdk/              GameModule interface, helpers, contract test suite
 tests/                   integration tests (real server + WS clients), architecture tests
 docs/                    architecture, protocol, rules, deployment, adding a game
+deploy/                  EC2 release script and its self-test
+.github/workflows/       CI on every push; deploy to EC2 on v* tags
 ```
 
 ## Docs
@@ -69,6 +72,7 @@ docs/                    architecture, protocol, rules, deployment, adding a gam
 - [Protocol](docs/PROTOCOL.md): the versioned WebSocket and HTTP contract
 - [Adding a game](docs/ADDING_A_GAME.md): step-by-step guide for a second game
 - [Imposter rules](docs/IMPOSTER_RULES.md): rules, tie-breaks and scoring
+- [Mafia rules](docs/MAFIA_RULES.md): roles, night resolution, ties, chat channels and scoring
 - [Deployment](docs/DEPLOYMENT.md): production build, reverse proxy, WSS
 - [Plan & progress](PLAN.md)
 
@@ -85,4 +89,4 @@ variables reach the browser, and none of them are secret.
   room-to-instance routing (sticky by room code) and pub/sub for fan-out. That is not implemented.
 - **Guest identity is per device.** Clearing site data or switching browsers means joining as a new player.
 - **English word lists only.** They're easy to extend in `apps/server/src/games/imposter/words/*.json`.
-- **Voice and video are out of scope.** Play in person or on any call.
+- **Voice and video are out of scope.** Play in person or on any call. Mafia has built-in text chat.

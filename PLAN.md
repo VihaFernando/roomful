@@ -49,6 +49,10 @@ plugin marketplace / dynamic code loading.
 | D16 | *(added)* Product name **Roomful**. Fonts: Bricolage Grotesque (display), Geist (body), Geist Mono (codes). | Distinct identity. |
 | D17 | *(added)* Imposter public guess view shows counts only; shared-screen UI (reveal card, secret peek, clue prompts) is identical for every role. | Avoid revealing surviving Imposters, in protocol and by glance across a room. |
 | D18 | *(added)* `tests/` is a Bun workspace (`@party/tests`); root scripts use `bun run --filter`. | Workspace resolution for integration tests; Bun `--cwd` form is not valid for `run`. |
+| D19 | *(added 2026-10-21)* Second game **Mafia** (5–10 players). Rules researched and fixed in docs/MAFIA_RULES.md: auto Mafia count 1 (5–6) / 2 (7–10); split Mafia vote → random among leaders; Doctor self-save once + no consecutive repeat (both host settings); reveal role on death (setting, default on); dead Mafia don't vote; day tie → one revote, then nobody; no votes → nobody; 10-day cap → Mafia win. | Researched common rulesets; picked the most decisive, least stall-prone options. |
+| D20 | *(added)* Mafia chat lives **inside the game module** as a `chat.send` action; channel (town / mafia / graveyard) is chosen server-side from phase, role and life. Mafia and ghost chat travel only in private views. Every living player picks at night (villagers "suspect"). | No protocol or platform change; secrets stay per viewer; phones look identical at night. |
+| D22 | *(added 2026-10-21)* CI/CD with GitHub Actions: `ci.yml` on every push/PR; `deploy.yml` on `v*` tags only → ships the CI-tested bundle to EC2 over SSH; `deploy/remote-release.sh` swaps `apps/*/dist` inside the existing install (`/home/ec2-user/roomful`, Amazon Linux, `roomful` systemd unit), restarts, health-checks and restores the previous build on failure (self-tested in CI). | Restarts end live games (in-memory rooms), so deploys are deliberate; fits the server as already set up, nothing built on the box. |
+| D21 | *(added)* Game palettes via token override: `.theme-night` on `<html>` redefines the colour tokens (no new components, no gradients, accent unchanged). Game `Screen`s are `React.lazy` chunks; common game parts live in `features/games/shared/`. | On-brand mood per game; main bundle stays ~146 KB gz while games are added. |
 
 ---
 
@@ -532,7 +536,7 @@ Each phase ends with: tests green, typecheck green, progress tracker updated.
 
 ## 14. Progress tracker
 
-Status 2026-10-20: **v1 feature-complete.** All phases P1–P11 done except the items marked ☐ below.
+Status 2026-10-21: **v1 feature-complete + Mafia.** All phases P1–P12 done except the items marked ☐ below.
 
 ### P1 Foundation
 - [x] Root `package.json` (workspaces incl. `tests`), scripts via `bun run --filter`
@@ -576,8 +580,24 @@ Status 2026-10-20: **v1 feature-complete.** All phases P1–P11 done except the 
 ### P11 Docs
 - [x] README, ARCHITECTURE, PROTOCOL, ADDING_A_GAME, IMPOSTER_RULES, DEPLOYMENT
 
+### P12 Mafia (second game)
+- [x] Rules research + decisions (D19–D21), docs/MAFIA_RULES.md
+- [x] Shared contract `@party/shared/games/mafia` (settings, actions, public/private views)
+- [x] Server module: reveal → night → morning → discussion → voting/revote → voteResult, victory, day cap, chat channels, presence, scoring
+- [x] 47 module tests (contract suite, isolation, night resolution, Doctor rules, ties, chat, presence, scoring) + WS integration test scanning town frames
+- [x] Web UI: reveal, night (all roles + ghosts), morning (private findings), discussion chat, voting (+chat sheet), vote result, results replay, settings, rules, icon
+- [x] Night palette (`theme-night`), lazy game screens, shared game parts (Imposter refactored onto them)
+- [x] Browser playthrough (5 phone contexts, prod build): no console errors; fixed day-time "Mafia" chat tab leak and composer overlap
+- [ ] Real-device playtest with 7–10 people (balance of 2 Mafia at 10 players, discussion length)
+
+### P13 CI/CD
+- [x] `.github/workflows/ci.yml`, `.github/workflows/deploy.yml` (tag-triggered), `deploy/remote-release.sh`, `deploy/test-release.sh`, docs/DEPLOYMENT.md setup guide
+- [ ] One-time EC2 + GitHub environment setup (docs/DEPLOYMENT.md), then first tag `v1.0.0`
+- [ ] Confirm first CI run is green on GitHub (release-script self-test only runs on Linux)
+
 ### Ideas / next
-- Second game (follow docs/ADDING_A_GAME.md) to validate the SDK for real
+- Mafia extras: optional Godfather (reads as town), Jester, last words for the eliminated, voice chat
+- Second game (follow docs/ADDING_A_GAME.md) to validate the SDK for real — done (Mafia)
 - Reduce web bundle (~150 KB gz; zod → `zod/mini` on the client)
 - "Not connected yet" vs "Reconnecting" label for players who joined but never opened a socket
 - Optional host "lock room" toggle
@@ -590,6 +610,8 @@ Status 2026-10-20: **v1 feature-complete.** All phases P1–P11 done except the 
 |---|---|---|
 | 2026-10-20 | Repo empty; Bun 1.4.2 available. Wrote PLAN.md and docs/BRIEF.md. | Start P1 Foundation. |
 | 2026-10-20 | Built everything P1–P11: shared/sdk, server, Imposter, web UI, tests (118), docs. Browser QA with puppeteer-core (scratchpad, not in repo) found & fixed: role-revealing colours on shared screens, guess phase exposing Imposter ids, desktop lobby width. | Real-device mobile QA; then a second game. |
+| 2026-10-21 | Added **Mafia** (P12): contract, server module, 48 new tests (166 total, green), web UI with night palette + chat, lazy game screens, shared game parts, docs/MAFIA_RULES.md. Platform untouched apart from a Suspense wrapper in RoomShell. Browser QA passed after two fixes. | Playtest Mafia with 7–10 real phones; tune timers/Mafia count from feedback. |
+| 2026-10-21 | Added CI/CD (P13): CI on every push, tag-triggered EC2 deploy that swaps the built folders in the existing install, health-checks and auto rolls back (verified locally with deploy/test-release.sh and in CI). | Do the one-time EC2/GitHub setup in docs/DEPLOYMENT.md, push, check CI is green, then `git tag v1.0.0 && git push origin v1.0.0`. |
 
 ---
 

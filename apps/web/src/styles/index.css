@@ -57,10 +57,36 @@
   }
 }
 
+/*
+ * Night palette for games with a day/night cycle (Mafia). The same tokens with
+ * the lights off: every component adapts without night-specific styles, and the
+ * orange accent stays the one bright thing on screen. Toggled on <html>.
+ */
+.theme-night {
+  color-scheme: dark;
+  --color-paper: #16140f;
+  --color-card: #201d17;
+  --color-sunk: #2a261f;
+  --color-line: #353028;
+  --color-line-strong: #4b443a;
+  --color-ink: #f1ece1;
+  --color-ink-2: #cbc3b2;
+  --color-muted: #958c7a;
+  --color-accent-soft: #3b2416;
+  --color-accent-ink: #ffab88;
+  --color-crew: #7fc2a8;
+  --color-crew-soft: #1e302a;
+  --color-imposter: #f08b7f;
+  --color-imposter-soft: #3a1e1a;
+  --color-warn: #e2b660;
+  --color-warn-soft: #362c17;
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out);
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);

@@ -101,6 +101,9 @@ access to rooms, sessions or sockets.
   never logged.
 - Imposter-specific protections include crew-only checks for clues that contain the word (so Imposters learn
   nothing from a rejection), a guess phase that reveals only counts, and role-neutral styling on shared screens.
+- Mafia-specific protections: every living player picks at night (Villagers mark a suspect), so phones look the
+  same. Night progress is public only as counts. Mafia whispers and ghost chat travel only in the private views
+  of the players allowed to read them. The *Mafia* chat tab is shown only at night.
 
 ## Scaling path (not implemented)
 

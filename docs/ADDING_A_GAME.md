@@ -42,7 +42,7 @@ Implement `GameModule` with `defineGame(...)` from `@party/game-sdk`. Rules of t
 
 ## 3. Register it on the server: `apps/server/src/games/index.ts`
 ```ts
-export const gameModules = [imposterModule, wordChainModule];
+export const gameModules = [imposterModule, mafiaModule, wordChainModule];
 ```
 
 ## 4. Web UI: `apps/web/src/features/games/<id>/`
@@ -52,11 +52,19 @@ export const gameModules = [imposterModule, wordChainModule];
 - `SettingsForm.tsx` implements `GameSettingsFormProps<WordChainSettings>`: `editable` is false for non-hosts,
   and `onChange` sends the full settings object.
 - `Rules.tsx` is a compact how-to-play panel. `Icon.tsx` is a 48×48 SVG mark.
+- Reuse `features/games/shared/parts.tsx` (`BottomBar`, `PhaseIntro`, `WaitingFor`, `Tallies`) for the common
+  game-screen pieces.
+- A game that needs its own mood can switch palettes by toggling a class on `<html>` that redefines the colour
+  tokens. Mafia's `theme-night` (in `styles/index.css`) is the example: every component adapts, nothing else
+  changes.
 
 ## 5. Register it on the web: `apps/web/src/features/games/registry.ts`
 ```ts
-[WORD_CHAIN_ID]: defineGameUI({ id: WORD_CHAIN_ID, Screen, SettingsForm, Rules, Icon, summarize }),
+const WordChainScreen = lazy(() => import("./word-chain/Screen").then((m) => ({ default: m.WordChainScreen })));
+[WORD_CHAIN_ID]: defineGameUI({ id: WORD_CHAIN_ID, Screen: WordChainScreen, SettingsForm, Rules, Icon, summarize }),
 ```
+Load the `Screen` lazily as shown. The lobby only needs the icon, rules and settings form, so each game's
+in-game code downloads only when a match of it starts.
 
 ## 6. Test it
 ```ts

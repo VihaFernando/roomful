@@ -129,37 +129,7 @@ export function SecretPeek() {
   );
 }
 
-export function WaitingFor({ ids, label }: { ids: string[]; label: string }) {
-  const { players } = useImposter();
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex -space-x-1.5">
-        {ids.slice(0, 6).map((id) => (
-          <Avatar key={id} id={players.get(id).avatarId} size="xs" className="ring-2 ring-paper" />
-        ))}
-      </div>
-      <span className="text-sm text-ink-2">{label}</span>
-    </div>
-  );
-}
-
-/** Sticky action area pinned above the home indicator / keyboard. */
-export function BottomBar({ children }: { children: ReactNode }) {
-  return (
-    <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-line bg-paper px-4 pt-3 pb-safe">
-      {children}
-    </div>
-  );
-}
-
-export function PhaseIntro({ title, body }: { title: ReactNode; body?: ReactNode }) {
-  return (
-    <div className="mb-5">
-      <h1 className="font-display text-[28px] leading-tight font-bold tracking-[-0.025em] text-balance">{title}</h1>
-      {body && <p className="mt-1.5 text-[15px] text-ink-2 text-pretty">{body}</p>}
-    </div>
-  );
-}
+export { BottomBar, PhaseIntro, WaitingFor } from "../shared/parts";
 
 export function SpectatorNote() {
   const { isParticipant, alive } = useImposter();

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import type { ApiError, RoomLookup, SessionGrant } from "@party/shared";
 import type { ImposterPrivateView, ImposterPublicView } from "@party/shared/games/imposter";
+import type { MafiaPrivateView, MafiaPublicView } from "@party/shared/games/mafia";
 import { TestClient, startServer, tick, type TestServer } from "./helpers";
 
 let server: TestServer | null = null;
@@ -48,7 +49,7 @@ describe("HTTP API", () => {
     server = startServer();
     expect((await server.get<{ ok: boolean }>("/api/health")).body.ok).toBe(true);
     const games = await server.get<{ games: { id: string }[] }>("/api/games");
-    expect(games.body.games.map((g) => g.id)).toEqual(["imposter"]);
+    expect(games.body.games.map((g) => g.id)).toEqual(["imposter", "mafia"]);
 
     const bad = await server.post<ApiError>("/api/rooms", { nickname: "", avatarId: "fox" });
     expect(bad.status).toBe(400);
@@ -230,5 +231,50 @@ describe("full Imposter match over WebSockets", () => {
     expect(priv(third)!.role).toBe(roleBefore);
     const room = third.messages.find((m) => m.type === "session.resumed")!.payload as { room: { players: unknown[] } };
     expect(room.room.players).toHaveLength(3);
+  });
+});
+
+describe("Mafia over WebSockets", () => {
+  const mpub = (c: TestClient) => c.view!.public as MafiaPublicView;
+  const mpriv = (c: TestClient) => c.view!.private as MafiaPrivateView;
+
+  test("night actions and Mafia chat never reach the town; morning resolves for everyone", async () => {
+    server = startServer();
+    const { clients, host } = await setupRoom(server, 6);
+    await host.ok("game.select", { gameId: "mafia" });
+    await host.ok("game.start");
+    await tick();
+
+    const mafia = clients.filter((c) => mpriv(c).role === "mafia");
+    const town = clients.filter((c) => mpriv(c).role !== "mafia");
+    expect(mafia).toHaveLength(1);
+    const mafiaId = idOf(mafia[0]!);
+    const doctor = town.find((c) => mpriv(c).role === "doctor")!;
+    const victim = town.find((c) => mpriv(c).role === "villager")!;
+
+    for (const c of clients) await c.ok("game.action", { action: { type: "role.ack" } });
+    await tick();
+    expect(mpub(host).phase).toBe("night");
+
+    await mafia[0]!.ok("game.action", { action: { type: "chat.send", text: "zebra-plan-77" } });
+    for (const c of clients) {
+      const p = mpriv(c).prompt!;
+      const target = c === mafia[0] ? idOf(victim) : c === doctor ? idOf(doctor) : p.options[0]!;
+      await c.ok("game.action", { action: { type: "night.pick", targetId: target } });
+    }
+    await tick();
+    expect(mpub(host).phase).toBe("morning");
+    expect(mpub(host).lastNight).toEqual({ night: 1, killedId: idOf(victim) });
+    expect(mpriv(victim).chatChannel).toBe("graveyard");
+
+    // Nothing the town received before results gives the Mafia away.
+    for (const c of town) {
+      for (const f of c.frames) {
+        expect(f).not.toContain("zebra-plan-77");
+        expect(f).not.toContain(`"partners":["${mafiaId}"]`);
+        expect(f).not.toMatch(/"role":"mafia"/);
+      }
+    }
+    expect(mafia[0]!.frames.some((f) => f.includes("zebra-plan-77"))).toBe(true);
   });
 });

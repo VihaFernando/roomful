@@ -1,6 +1,6 @@
 # Party Platform — session guide
 
-Real-time multiplayer party games platform (first game: Imposter). Bun + TypeScript monorepo.
+Real-time multiplayer party games platform (games: Imposter, Mafia). Bun + TypeScript monorepo.
 
 ## Start of every session
 1. Read only §14 (Progress tracker) and §15 (Session log) of [PLAN.md](PLAN.md). Open other PLAN sections only when the task needs them.
@@ -22,4 +22,4 @@ Real-time multiplayer party games platform (first game: Imposter). Bun + TypeScr
 - Design: warm paper bg, ink text, one orange accent; no gradients/glows/glass/pulsing. Mobile-first, 48px targets.
 
 ## Docs
-`docs/BRIEF.md` (original requirements) · `docs/PROTOCOL.md` · `docs/ADDING_A_GAME.md` · `docs/IMPOSTER_RULES.md` · `docs/DEPLOYMENT.md`
+`docs/BRIEF.md` (original requirements) · `docs/PROTOCOL.md` · `docs/ADDING_A_GAME.md` · `docs/IMPOSTER_RULES.md` · `docs/MAFIA_RULES.md` · `docs/DEPLOYMENT.md`

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { BookOpen, LogOut, MoreVertical, Trophy, WifiOff } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Wordmark } from "../../components/layout/Wordmark";
@@ -68,7 +68,9 @@ export function RoomShell() {
 
         {inGame ? (
           Screen ? (
-            <Screen />
+            <Suspense fallback={<LoadingScreen label="Loading the game…" />}>
+              <Screen />
+            </Suspense>
           ) : (
             <StatePanel title="Update needed" body="This game isn't available in this version of the app. Refresh the page." />
           )

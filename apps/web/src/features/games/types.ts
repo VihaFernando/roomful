@@ -12,7 +12,7 @@ export interface GameSettingsFormProps<S = unknown> {
 
 export interface GameUI<S = unknown> {
   id: string;
-  /** Renders the running match. Reads state through room-context hooks. */
+  /** Renders the running match. Reads state through room-context hooks. May be React.lazy. */
   Screen: ComponentType;
   SettingsForm: ComponentType<GameSettingsFormProps<S>>;
   /** Compact how-to-play content shown before the first round and on demand. */
