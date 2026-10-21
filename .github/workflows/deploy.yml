@@ -1,0 +1,64 @@
+# Deploys to EC2 when a version tag is pushed (git tag v1.2.0 && git push origin v1.2.0).
+# Runs the full CI first and ships exactly the build it tested. Setup: docs/DEPLOYMENT.md.
+name: Deploy
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+# Never run two deploys at once, and never cancel one halfway.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      package: true
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: deploy
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+
+      - name: Set up SSH
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pinned host key: the job refuses to talk to a server it doesn't recognise.
+          printf '%s\n' "$EC2_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host ec2\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/deploy_key\n  StrictHostKeyChecking yes\n' "$EC2_HOST" "$EC2_USER" > ~/.ssh/config
+
+      - name: Upload release
+        run: |
+          scp release.tgz "ec2:/tmp/roomful-${GITHUB_RUN_ID}.tgz"
+          scp deploy/remote-release.sh "ec2:/tmp/roomful-${GITHUB_RUN_ID}.sh"
+
+      - name: Switch to the new release
+        run: ssh ec2 "bash /tmp/roomful-${GITHUB_RUN_ID}.sh '${GITHUB_REF_NAME}' /tmp/roomful-${GITHUB_RUN_ID}.tgz"
+
+      - name: Clean up
+        if: always()
+        run: |
+          ssh ec2 "rm -f /tmp/roomful-${GITHUB_RUN_ID}.sh /tmp/roomful-${GITHUB_RUN_ID}.tgz" || true
+          rm -f ~/.ssh/deploy_key

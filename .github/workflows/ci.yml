@@ -1,0 +1,58 @@
+# Tests, typecheck and build on every branch push and pull request.
+# Deploy reuses this workflow (workflow_call) and asks it to package the tested build.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_call:
+    inputs:
+      package:
+        description: Upload the built app as the `release` artifact
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun test
+      - run: bun run build
+
+      - name: Test the EC2 release script (deploy, health check, rollback)
+        run: bash deploy/test-release.sh
+
+      # The server bundle is self-contained: the host needs only Bun plus these two folders.
+      - name: Package release
+        if: inputs.package
+        run: |
+          mkdir -p release/apps/server release/apps/web
+          cp -r apps/server/dist release/apps/server/
+          cp -r apps/web/dist release/apps/web/
+          echo "${GITHUB_REF_NAME} ${GITHUB_SHA}" > release/VERSION
+          tar -czf release.tgz -C release .
+
+      - name: Upload release
+        if: inputs.package
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release.tgz
+          retention-days: 7
