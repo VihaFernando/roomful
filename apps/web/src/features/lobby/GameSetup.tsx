@@ -79,23 +79,26 @@ export function SettingsPanel({ onOpenRules }: { onOpenRules: () => void }) {
   const listing = games?.find((g) => g.id === gameId);
 
   // Mirror server settings locally so controls respond instantly; the server echo replaces them.
-  const [local, setLocal] = useState<unknown>(room?.gameSettings);
+  // Tagged with the game they belong to: right after switching games the mirror still holds the
+  // previous game's settings for one render, and must never reach the new game's form or summary.
+  const [mirror, setMirror] = useState<{ gameId: string | null; settings: unknown }>({ gameId, settings: room?.gameSettings });
   const lastSent = useRef<string | null>(null);
   useEffect(() => {
-    setLocal(room?.gameSettings);
-  }, [room?.gameSettings]);
+    setMirror({ gameId, settings: room?.gameSettings });
+  }, [gameId, room?.gameSettings]);
   const [open, setOpen] = useState(false);
+  const local = mirror.gameId === gameId ? mirror.settings : room?.gameSettings;
 
   if (!room || !gameId || !ui || !local) return null;
   const Form = ui.SettingsForm;
   const online = players.filter((p) => p.presence === "online").length;
 
   async function change(next: unknown) {
-    setLocal(next);
+    setMirror({ gameId, settings: next });
     const json = JSON.stringify(next);
     lastSent.current = json;
     const ok = await conn.run("game.updateSettings", { gameId: gameId!, settings: next });
-    if (!ok && lastSent.current === json) setLocal(room?.gameSettings);
+    if (!ok && lastSent.current === json) setMirror({ gameId, settings: room?.gameSettings });
   }
 
   return (
